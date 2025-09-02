@@ -2393,10 +2393,10 @@ authselect select sssd --force
 
 # Create sssd.conf.
 # (Used for System Security Services Daemon.)
-if [ ! -f /etc/sssd/conf.d/sssd.conf.orig ]; then
-  mv /etc/sssd/conf.d/sssd.conf /etc/sssd/conf.d/sssd.conf.orig
+if [ ! -f /etc/sssd/sssd.conf.orig ]; then
+  mv /etc/sssd/sssd.conf /etc/sssd/sssd.conf.orig
 fi
-cat > /etc/sssd/conf.d/sssd.conf << EOF.sssd.conf
+cat > /etc/sssd/sssd.conf << EOF.sssd.conf
 [sssd]
 domains = LDAP
 services = nss, pam, sudo, autofs, ssh
@@ -2415,6 +2415,7 @@ auth_provider = krb5
 krb5_server = 127.0.0.1
 krb5_realm = $KERBEROS_REALM
 EOF.sssd.conf
+chmod 0600 /etc/sssd/sssd.conf
 
 # Create directories.
 systemctl stop slapd
