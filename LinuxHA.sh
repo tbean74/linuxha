@@ -4132,6 +4132,7 @@ smtpd_sasl_security_options = noanonymous
 recipient_delimiter = +
 home_mailbox = Maildir/
 strict_rfc821_envelopes = yes
+myorigin = $mydomain
 myhostname = mail.$WAN_DOMAIN
 broken_sasl_auth_clients = yes
 alias_maps = hash:/etc/aliases
