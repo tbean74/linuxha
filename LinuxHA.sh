@@ -2460,6 +2460,7 @@ cn: schema
 
 include: file:///etc/ldap/schema/core.ldif
 include: file:///etc/ldap/schema/cosine.ldif
+include: file:///etc/ldap/schema/nis.ldif
 include: file:///etc/ldap/schema/inetorgperson.ldif
 include: file:///etc/ldap/schema/argonaut-fd.ldif
 include: file:///etc/ldap/schema/autofs.ldif
@@ -2467,6 +2468,8 @@ include: file:///etc/ldap/schema/autofs5-fd-conf.ldif
 include: file:///etc/ldap/schema/core-fd-conf.ldif
 include: file:///etc/ldap/schema/core-fd.ldif
 include: file:///etc/ldap/schema/dovecot-fd.ldif
+include: file:///etc/ldap/schema/fai-fd-conf.ldif
+include: file:///etc/ldap/schema/fai.ldif
 include: file:///etc/ldap/schema/gpg-fd.ldif
 include: file:///etc/ldap/schema/kerberos.ldif
 include: file:///etc/ldap/schema/ldapns.ldif
@@ -2475,9 +2478,14 @@ include: file:///etc/ldap/schema/pgp-keyserver.ldif
 include: file:///etc/ldap/schema/pgp-recon.ldif
 include: file:///etc/ldap/schema/pgp-remte-prefs.ldif
 include: file:///etc/ldap/schema/postfix-fd.ldif
+include: file:///etc/ldap/schema/quota-fd.ldif
+include: file:///etc/ldap/schema/quota.ldif
+include: file:///etc/ldap/schema/service-fd.ldif
 include: file:///etc/ldap/schema/spamassassin-fd.ldif
 include: file:///etc/ldap/schema/sudo-fd-conf.ldif
 include: file:///etc/ldap/schema/sudo.ldif
+include: file:///etc/ldap/schema/systems-fd-conf.ldif
+include: file:///etc/ldap/schema/systems-fd.ldif
 include: file:///etc/ldap/schema/template-fd.ldif
 
 # Module configuration.
@@ -2488,12 +2496,6 @@ olcModulePath: /usr/lib/ldap
 olcModuleLoad: back_mdb
 olcModuleLoad: back_monitor
 olcModuleLoad: syncprov
-
-# Frontend database configuration.
-dn: olcDatabase=frontend,cn=config
-objectClass: olcDatabaseConfig
-objectClass: olcFrontendConfig
-olcDatabase: frontend
 
 # Config database configuration.
 dn: olcDatabase=config,cn=config
@@ -2532,9 +2534,11 @@ objectClass: olcMdbConfig
 olcDatabase: mdb
 olcDbMaxSize: 10000000
 olcDbDirectory: /var/lib/ldap
-olcDbIndex:  default eq
-olcDbIndex:  entryCSN,entryUUID,objectClass,ou,mail,cn,sn,givenName,\
-uid,uidNumber,gidNumber,roleOccupant,krbPrincipalName,krbPwdPolicyReference
+olcDbIndex: objectClass eq
+olcDbIndex: cn,uid eq
+olcDbIndex: uidNumber,gidNumber eq
+olcDbIndex: member,memberUid eq
+olcDbIndex: mail eq,sub
 olcSuffix: $LDAP_BASE_DN
 olcRootDN: uid=admin,ou=people,$LDAP_BASE_DN
 olcRootPW: $(slappasswd -s "$ADMIN_PASSWORD")
@@ -2544,8 +2548,13 @@ olcAccess: to dn.subtree="cn=krbContainer,$LDAP_BASE_DN"
 olcAccess: to attrs=userPassword
   by self write
   by anonymous auth
+  by * none
+olcAccess: to attrs=shadowLastChange
+  by self write
+  by * read
 olcAccess: to *
-  by users read
+  by self write
+  by * read
 olcMirrorMode: TRUE
 olcSyncRepl: 
   rid=3 
@@ -2579,9 +2588,10 @@ slapadd -F /etc/ldap/slapd.d -n 0 -l /tmp/config.ldif
 cat > /tmp/backend.ldif << EOF.backend.ldif
 dn: $LDAP_BASE_DN
 dc: $SECOND_LEVEL_LAN_DOMAIN
+o: $SECOND_LEVEL_LAN_DOMAIN
 objectClass: top
 objectClass: dcObject
-objectClass: locality
+objectClass: organization
 description: LDAP Base
 
 dn: ou=people,$LDAP_BASE_DN
