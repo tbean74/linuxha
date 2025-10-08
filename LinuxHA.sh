@@ -2561,7 +2561,7 @@ olcSyncRepl:
   provider=ldap://$PDC_FQDN 
   bindmethod=sasl 
   saslmech=GSSAPI
-  searchbase="$LDAP_BASE_DN" 
+  searchbase=$LDAP_BASE_DN 
   type=refreshAndPersist 
   retry="5 +" 
 olcSyncRepl: 
@@ -2569,7 +2569,7 @@ olcSyncRepl:
   provider=ldap://$BDC_FQDN 
   bindmethod=sasl 
   saslmech=GSSAPI
-  searchbase="$LDAP_BASE_DN" 
+  searchbase=$LDAP_BASE_DN 
   type=refreshAndPersist 
   retry="5 +" 
 
@@ -2588,7 +2588,7 @@ slapadd -F /etc/ldap/slapd.d -n 0 -l /tmp/config.ldif
 cat > /tmp/backend.ldif << EOF.backend.ldif
 dn: $LDAP_BASE_DN
 dc: $SECOND_LEVEL_LAN_DOMAIN
-o: $SECOND_LEVEL_LAN_DOMAIN
+o: $ORGANIZATION
 objectClass: top
 objectClass: dcObject
 objectClass: organization
@@ -2695,10 +2695,10 @@ systemctl restart sssd
 
 # Set passwords.
 if [ "$SERVER" = "pdc" ]; then
-  ldappasswd -H ldapi:/// -D uid=admin,ou=people,"$LDAP_BASE_DN" \
-    -w "$ADMIN_PASSWORD" -s "$ADMIN_PASSWORD" cn=adm-srv,cn=krbContainer,"$LDAP_BASE_DN"
-  ldappasswd -H ldapi:/// -D uid=admin,ou=people,"$LDAP_BASE_DN" \
-    -w "$ADMIN_PASSWORD" -s "$ADMIN_PASSWORD" cn=kdc-srv,cn=krbContainer,"$LDAP_BASE_DN"
+  ldappasswd -H ldapi:/// -D uid=admin,ou=people,$LDAP_BASE_DN \
+    -w "$ADMIN_PASSWORD" -s "$ADMIN_PASSWORD" cn=adm-srv,cn=krbContainer,$LDAP_BASE_DN
+  ldappasswd -H ldapi:/// -D uid=admin,ou=people,$LDAP_BASE_DN \
+    -w "$ADMIN_PASSWORD" -s "$ADMIN_PASSWORD" cn=kdc-srv,cn=krbContainer,$LDAP_BASE_DN
 fi
 
 # Create the database backup cron job.
@@ -2818,19 +2818,19 @@ EOF.kadm5.acl
 # is necessary to add backend.ldif, but has to be removed and re-added by 
 # kdb5_ldap_util to properly initialize the Kerberos LDAP objects).
 if [ "$SERVER" = "pdc" ]; then
-  kdb5_ldap_util -f -D uid=admin,ou=people,"$LDAP_BASE_DN" -w "$ADMIN_PASSWORD" \
+  kdb5_ldap_util -f -D uid=admin,ou=people,$LDAP_BASE_DN -w "$ADMIN_PASSWORD" \
     -P "$ADMIN_PASSWORD" -H ldapi:/// destroy -r "$KERBEROS_REALM"
-  kdb5_ldap_util -D uid=admin,ou=people,"$LDAP_BASE_DN" -w "$ADMIN_PASSWORD" \
+  kdb5_ldap_util -D uid=admin,ou=people,$LDAP_BASE_DN -w "$ADMIN_PASSWORD" \
     -P "$ADMIN_PASSWORD" -H ldapi:/// create -r "$KERBEROS_REALM" -s
 fi
 
 # Create stash file.
 echo -ne "$ADMIN_PASSWORD\n$ADMIN_PASSWORD\n" | kdb5_ldap_util \
-  -D uid=admin,ou=people,"$LDAP_BASE_DN" -w "$ADMIN_PASSWORD" stashsrvpw \
-  -f /etc/krb5kdc/service.keyfile cn=kdc-srv,cn=krbContainer,"$LDAP_BASE_DN"
+  -D uid=admin,ou=people,$LDAP_BASE_DN -w "$ADMIN_PASSWORD" stashsrvpw \
+  -f /etc/krb5kdc/service.keyfile cn=kdc-srv,cn=krbContainer,$LDAP_BASE_DN
 echo -ne "$ADMIN_PASSWORD\n$ADMIN_PASSWORD\n" | kdb5_ldap_util \
-  -D uid=admin,ou=people,"$LDAP_BASE_DN" -w "$ADMIN_PASSWORD" stashsrvpw \
-  -f /etc/krb5kdc/service.keyfile cn=adm-srv,cn=krbContainer,"$LDAP_BASE_DN"
+  -D uid=admin,ou=people,$LDAP_BASE_DN -w "$ADMIN_PASSWORD" stashsrvpw \
+  -f /etc/krb5kdc/service.keyfile cn=adm-srv,cn=krbContainer,$LDAP_BASE_DN
 
 # Sync the password stash between PDC and BDC.
 if [ "$SERVER" = "pdc" ]; then
@@ -4899,7 +4899,7 @@ define service {
 define service {
   hostgroup_name         ubuntu-servers
   service_description    LDAP Service
-  check_command          check_ldap_status!"$LDAP_BASE_DN"
+  check_command          check_ldap_status!$LDAP_BASE_DN
   max_check_attempts     5
   check_interval         5
   retry_interval         3
