@@ -4144,7 +4144,6 @@ home_mailbox = Maildir/
 strict_rfc821_envelopes = yes
 myorigin = $mydomain
 myhostname = mail.$WAN_DOMAIN
-broken_sasl_auth_clients = yes
 alias_maps = hash:/etc/aliases
 canonical_maps = hash:/etc/postfix/canonical
 relocated_maps = hash:/etc/postfix/relocated
@@ -4159,6 +4158,7 @@ virtual_gid_maps = static:vmail
 virtual_uid_maps = static:vmail
 dovecot_destination_recipient_limit = 1
 
+smtpd_delay_reject = yes
 smtpd_helo_required = yes
 smtpd_helo_restrictions =
   permit_mynetworks,
@@ -4182,6 +4182,10 @@ smtpd_recipient_restrictions =
   check_client_access hash:/etc/postfix/access,
   check_policy_service unix:private/policyd-spf,
   check_policy_service inet:127.0.0.1:10023,
+  permit
+smtpd_data_restrictions =
+  reject_unauth_pipelining,
+  reject_multi_recipient_bounce
   permit
 EOF.main.cf
 
