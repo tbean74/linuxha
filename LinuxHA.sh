@@ -691,7 +691,7 @@ SASL="cyrus-sasl2-doc libsasl2-2 libsasl2-modules libsasl2-modules-gssapi-mit \
 SHOREWALL="shorewall shorewall-doc shorewall-init"
 SNORT="oinkmaster snort snort-doc"
 SOURCE_CODE_DEPENDS="gcc git make subversion"
-SPAMASSASSIN="spamassassin"
+SPAMASSASSIN="spamassassin spamc"
 SQUIDCLAMAV_DEPENDS="libicapapi-dev libssl-dev libtimedate-perl"
 SYSTEM_DEPENDS="apt-utils dkms vim-scripts"
 WEBMIN="at cups mdadm quota quotatool sarg stunnel4 usermin webalizer webmin wodim"
@@ -1825,6 +1825,9 @@ sed -i "/bypass/ s|^#||" /etc/amavis/conf.d/15-content_filter_mode
 # Modify groups.
 usermod clamav -g amavis
 usermod clamav -G clamav
+
+# Configure SpamAssassin's local.cf.
+sed -i "/rewrite_header Subject/ s|^#||" /etc/spamassassin/local.cf
 
 # SpamAssassin startup.
 pgrep "spamd child" > /dev/null
