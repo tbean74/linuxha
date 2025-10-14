@@ -648,7 +648,7 @@ CLUSTER_SUITE="cluster-glue crmsh dlm-controld drbd-utils fence-agents \
   rng-tools"
 CUPS="cups foomatic-db printer-driver-gutenprint"
 DOVECOT="dovecot-antispam dovecot-core dovecot-gssapi dovecot-imapd \
-  dovecot-ldap dovecot-lmtpd dovecot-managesieved dovecot-pop3d dovecot-sieve"
+  dovecot-ldap dovecot-lmtpd dovecot-pop3d"
 FAI="debmirror fai-doc fai-server"
 FREERADIUS="freeradius freeradius-krb5 freeradius-ldap libpam-radius-auth"
 FUSIONDIRECTORY="fusiondirectory fusiondirectory-tools \
@@ -691,7 +691,7 @@ SASL="cyrus-sasl2-doc libsasl2-2 libsasl2-modules libsasl2-modules-gssapi-mit \
 SHOREWALL="shorewall shorewall-doc shorewall-init"
 SNORT="oinkmaster snort snort-doc"
 SOURCE_CODE_DEPENDS="gcc git make subversion"
-SPAMASSASSIN="spamassassin spamc"
+SPAMASSASSIN="spamassassin"
 SQUIDCLAMAV_DEPENDS="libicapapi-dev libssl-dev libtimedate-perl"
 SYSTEM_DEPENDS="apt-utils dkms vim-scripts"
 WEBMIN="at cups mdadm quota quotatool sarg stunnel4 usermin webalizer webmin wodim"
@@ -1798,7 +1798,8 @@ if [ ! -f /etc/clamav/clamd.conf.orig ]; then
 fi
 sed -i "s|DetectPUA false|DetectPUA true|
   s|HeuristicScanPrecedence false|HeuristicScanPrecedence true|
-  s|StructuredDataDetection false|StructuredDataDetection true|" \
+  s|StructuredDataDetection false|StructuredDataDetection true|
+  /LocalSocketGroup/ c\LocalSocketGroup amavis" \
     /etc/clamav/clamd.conf
 
 # Update ClamAV's malware signatures.
@@ -1822,20 +1823,19 @@ if [ ! -f /etc/amavis/conf.d/15-content_filter_mode.orig ]; then
 fi
 sed -i "/bypass/ s|^#||" /etc/amavis/conf.d/15-content_filter_mode
 
-# Modify groups.
-usermod clamav -g amavis
-usermod clamav -G clamav
+# Update and compile SpamAssassin rule updates.
+$WGET "http://spamassassin.apache.org/updates/GPG.KEY" -O /tmp/GPG.key
+sa-update --import /tmp/GPG.key
+sa-update -D
+sa-compile
 
-# Configure SpamAssassin's local.cf.
-sed -i "/rewrite_header Subject/ s|^#||" /etc/spamassassin/local.cf
-
-# SpamAssassin startup.
-pgrep "spamd child" > /dev/null
-if [ $? -eq 1 ]; then
-  systemctl start spamassassin
-else
-  systemctl restart spamassassin
-fi
+# Create SpamAssassin's cron job.
+cat > /usr/local/bin/sa-update.sh << EOF.sa-update
+sa-update --allowplugins --channel updates.spamassassin.org
+sa-compile
+EOF.sa-update
+echo "@daily root /usr/local/bin/sa-update.sh" > /etc/cron.d/sa-update
+chmod 700 /usr/local/bin/sa-update.sh
 
 # Reload configuration.
 systemctl restart clamav-daemon
@@ -3978,17 +3978,20 @@ echo ""
 apt_function install $DOVECOT
 
 # Configure Vmail.
-groupadd -g 800 vmail
-useradd -m -k "" -u 800 -g 800 -s /bin/false vmail
+groupadd vmail
+useradd -m -k "" -s /bin/false vmail
+chmod 2770 /home/vmail
 
 # Configure 10-auth.conf.
 if [ ! -f /etc/dovecot/conf.d/10-auth.conf.orig ]; then 
   cp /etc/dovecot/conf.d/10-auth.conf /etc/dovecot/conf.d/10-auth.conf.orig
 fi
-sed -i "/auth_default_realm/ c\auth_default_realm = $KERBEROS_REALM
+sed -i "/disable_plaintext_auth/ s|^#||
+  /auth_default_realm/ c\auth_default_realm = $KERBEROS_REALM
   /auth_username_format/ c\auth_username_format = %u
   /auth_gssapi_hostname/ c\auth_gssapi_hostname = $FQDN
-  /auth_krb5_keytab/ c\auth_krb5_keytab = /etc/postfix/smtp.keytab
+  /auth_krb5_keytab/ c\auth_krb5_keytab = /etc/dovecot/dovecot.keytab
+  /auth_failure_delay/ s|^#||
   /auth_mechanisms/ c\auth_mechanisms = gssapi scram-sha-256-plus
   /!include auth-ldap.conf.ext/ s|^#||" /etc/dovecot/conf.d/10-auth.conf
 
@@ -4007,19 +4010,93 @@ chown /var/log/{dovecot.log,dovecot-info.log}
 if [ ! -f /etc/dovecot/conf.d/10-mail.conf.orig ]; then 
   cp /etc/dovecot/conf.d/10-mail.conf /etc/dovecot/conf.d/10-mail.conf.orig
 fi
-sed -i "s|mail_location = mbox:~.*$|mail_location = maildir:/home/vmail/%d/%n|
+sed -i "s|mail_location = mbox:~.*$|mail_location = maildir:/home/vmail/%h|
   /mail_uid =/ c\mail_uid = vmail
   /mail_gid =/ c\mail_gid = vmail
-  /mail_plugins =/ c\mail_plugins = fts quota" \
-    /etc/dovecot/conf.d/10-mail.conf
+  /mail_plugins =/ c\mail_plugins = fts quota
+  /mailbox_list_index/ s|^#||
+  /mailbox_idle_check_interval/ s|^#||
+  /maildir_copy_with_hardlinks/ s|^#||" /etc/dovecot/conf.d/10-mail.conf
 
 # Configure 10-master.conf.
 if [ ! -f /etc/dovecot/conf.d/10-master.conf.orig ]; then 
   cp /etc/dovecot/conf.d/10-master.conf /etc/dovecot/conf.d/10-master.conf.orig
 fi
-grep -q "user = vmail" /etc/dovecot/conf.d/10-master.conf || \
-  sed -i "/unix_listener auth-userdb {/ a\    user = vmail\n    group = vmail" \
-    /etc/dovecot/conf.d/10-master.conf
+cat > /etc/dovecot/conf.d/10-master.conf << EOF.10-master.conf
+service imap-login {
+  inet_listener imap {
+    port = 143
+  }
+  inet_listener imaps {
+    port = 993
+    ssl = yes
+  }
+}
+
+service pop3-login {
+  inet_listener pop3 {
+    port = 110
+  }
+  inet_listener pop3s {
+    port = 995
+    ssl = yes
+  }
+}
+
+service submission-login {
+  inet_listener submission {
+    port = 587
+  }
+}
+
+service lmtp {
+  unix_listener lmtp {
+    mode = 0600
+    user = postfix
+    group = postfix
+  }
+}
+
+service imap {
+  process_limit = 1024
+}
+
+service pop3 {
+  process_limit = 1024
+}
+
+service submission {
+  process_limit = 1024
+}
+
+service auth {
+  unix_listener auth-userdb {
+    mode = 0600
+    user = vmail
+    group = vmail
+  }
+
+  # Postfix smtp-auth
+  unix_listener /var/spool/postfix/private/auth {
+    mode = 0660
+    user = postfix
+    group = postfix
+  }
+}
+
+service auth-worker {
+  user = vmail
+}
+
+service dict {
+  unix_listener dict {
+    mode = 0660
+    user = vmail
+    group = vmail
+
+  }
+}
+EOF.10-master.conf
 
 # Configure 10-ssl.conf.
 if [ ! -f /etc/dovecot/conf.d/10-ssl.conf.orig ]; then 
@@ -4030,6 +4107,12 @@ sed -i "/ssl = yes/ s|#||
   /ssl_key =/ c\ssl_key = </etc/ssl/private/tls-key.pem
   /ssl_ca =/ c\ssl_ca = </etc/ssl/certs/ca-bundle.pem
   /ssl_require_crl =/ c\ssl_require_crl = yes" /etc/dovecot/conf.d/10-ssl.conf
+
+# Configure 20-imap.conf.
+if [ ! -f /etc/dovecot/conf.d/20-imap.conf.orig ]; then 
+  cp /etc/dovecot/conf.d/20-imap.conf.conf /etc/dovecot/conf.d/20-imap.conf.orig
+fi
+sed -i "/mail_plugins/ s|^#||" /etc/dovecot/conf.d/20-imap.conf
 
 # Configure 20-pop3.conf.
 if [ ! -f /etc/dovecot/conf.d/20-pop3.conf.orig ]; then 
@@ -4052,12 +4135,6 @@ sed -i "/\*:storage=1G/ s|#||
   /user = vmail/ s|#||
   /#  }/ s|#||
   /#}/ s|^#||" /etc/dovecot/conf.d/90-quota.conf
-
-# Configure 90-sieve.conf.
-if [ ! -f /etc/dovecot/conf.d/90-sieve.conf.orig ]; then 
-  cp /etc/dovecot/conf.d/90-sieve.conf /etc/dovecot/conf.d/90-sieve.conf.orig
-fi
-sed -i "/+notify +imapflags/ s|#||" /etc/dovecot/conf.d/90-sieve.conf
 
 # Configure the quota warning.
 cat > /usr/local/bin/quota-warning.sh << EOF.quota-warning.sh
@@ -4124,6 +4201,24 @@ if [ ! -f /etc/postfix/main.cf.orig ]; then
   mv /etc/postfix/main.cf /etc/postfix/main.cf.orig
 fi
 cat > /etc/postfix/main.cf << EOF.main.cf
+recipient_delimiter = +
+strict_rfc821_envelopes = yes
+myorigin = $mydomain
+myhostname = mail.$WAN_DOMAIN
+alias_maps = hash:/etc/aliases
+canonical_maps = hash:/etc/postfix/canonical
+relocated_maps = hash:/etc/postfix/relocated
+transport_maps = hash:/etc/postfix/transport
+mynetworks = 127.0.0.0/8 $LAN_NETWORK_ADDRESS/$CIDR
+mydestination = \$myhostname, $FQDN, localhost, localhost.$LAN_DOMAIN,\
+ www.\$mydomain, ftp.\$mydomain
+
+virtual_transport = dovecot
+virtual_gid_maps = static:vmail
+virtual_uid_maps = static:vmail
+virtual_mailbox_base = /home/vmail
+dovecot_destination_recipient_limit = 1
+
 smtpd_use_tls = yes
 smtpd_tls_loglevel = 1
 smtpd_tls_auth_only = yes
@@ -4138,28 +4233,8 @@ smtpd_sender_login_maps=hash:/etc/postfix/virtual
 smtpd_sasl_type = dovecot
 smtpd_sasl_auth_enable = yes
 smtpd_sasl_path = private/auth
-smtpd_sasl_authenticated_header = yes
 smtpd_sasl_local_domain = \$myhostname
 smtpd_sasl_security_options = noanonymous
-
-recipient_delimiter = +
-home_mailbox = Maildir/
-strict_rfc821_envelopes = yes
-myorigin = $mydomain
-myhostname = mail.$WAN_DOMAIN
-alias_maps = hash:/etc/aliases
-canonical_maps = hash:/etc/postfix/canonical
-relocated_maps = hash:/etc/postfix/relocated
-transport_maps = hash:/etc/postfix/transport
-mynetworks = 127.0.0.0/8 $LAN_NETWORK_ADDRESS/$CIDR
-content_filter = smtp-amavis:[127.0.0.1]:10024
-mydestination = \$myhostname, $FQDN, localhost, localhost.$LAN_DOMAIN,\
- www.\$mydomain, ftp.\$mydomain
-
-virtual_transport = dovecot
-virtual_gid_maps = static:vmail
-virtual_uid_maps = static:vmail
-dovecot_destination_recipient_limit = 1
 
 smtpd_delay_reject = yes
 smtpd_helo_required = yes
@@ -4198,12 +4273,19 @@ if [ ! -f /etc/postfix/master.cf.orig ]; then
 fi
 cat > /etc/postfix/master.cf << EOF.master.cf
 smtp      inet  n       -       y       -       -       smtpd
+  -o content_filter=amavis:[127.0.0.1]:10024
+  -o receive_override_options=no_address_mappings
+smtps     inet  n       -       n       -       2       smtpd
+  -o smtpd_tls_wrappermode=yes
+  -o content_filter=amavis:[127.0.0.1]:10024
+  -o receive_override_options=no_address_mappings
 submission inet n       -       y       -       -       smtpd
   -o syslog_name=postfix/submission
   -o smtpd_tls_security_level=encrypt
   -o smtpd_sasl_auth_enable=yes
   -o smtpd_tls_auth_only=yes
   -o smtpd_reject_unlisted_recipient=no
+  -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
   -o milter_macro_daemon_name=ORIGINATING
 pickup    unix  n       -       y       60      1       pickup
 cleanup   unix  n       -       y       -       0       cleanup
@@ -4242,9 +4324,30 @@ scalemail-backend unix -       n       n       -       2       pipe
   flags=R user=scalemail argv=/usr/lib/scalemail/bin/scalemail-store ${nexthop} ${user} ${extension}
 mailman   unix  -       n       n       -       -       pipe
   flags=FRX user=list argv=/usr/lib/mailman/bin/postfix-to-mailman.py ${nexthop} ${user
-dovecot   unix  -       n       n       -       -       pipe
-  flags=DRhu user=vmail:vmail argv=/usr/lib/dovecot/deliver \
-  -d \${recipient} -f \${sender}
+localhost:10025 inet n  -       n       -       2       smtpd
+  -o smtp_dns_support_level=enabled
+  -o content_filter=
+  -o myhostname=mail.$WAN_DOMAIN
+  -o local_recipient_maps=
+  -o relay_recipient_maps=
+  -o smtpd_restriction_classes=
+  -o smtpd_client_restrictions=
+  -o smtpd_helo_restrictions=
+  -o smtpd_sender_restrictions=
+  -o smtpd_recipient_restrictions=permit_mynetworks,reject
+  -o mynetworks=127.0.0.0/8
+  -o strict_rfc821_envelopes=yes
+  -o smtpd_error_sleep_time=0
+  -o smtpd_soft_error_limit=1001
+  -o smtpd_hard_error_limit=1000
+  -o smtpd_client_connection_count_limit=0
+  -o smtpd_client_connection_rate_limit=0
+  -o receive_override_options=no_unknown_recipient_checks,no_header_body_checks
+  -o smtpd_authorized_xforward_hosts=127.0.0.0/8
+amavis    unix  -       -       n       -       2       lmtp
+  -o disable_dns_lookups=yes
+  -o lmtp_send_xforward_command=yes
+  -o lmtp_data_done_timeout=1200
 EOF.master.cf
 
 # Create the root alias and update the local alias database.
