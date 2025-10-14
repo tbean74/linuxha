@@ -691,7 +691,7 @@ SASL="cyrus-sasl2-doc libsasl2-2 libsasl2-modules libsasl2-modules-gssapi-mit \
 SHOREWALL="shorewall shorewall-doc shorewall-init"
 SNORT="oinkmaster snort snort-doc"
 SOURCE_CODE_DEPENDS="gcc git make subversion"
-SPAMASSASSIN="spamassassin"
+SPAM_PREVENTION="razor pyzor spamassassin"
 SQUIDCLAMAV_DEPENDS="libicapapi-dev libssl-dev libtimedate-perl"
 SYSTEM_DEPENDS="apt-utils dkms vim-scripts"
 WEBMIN="at cups mdadm quota quotatool sarg stunnel4 usermin webalizer webmin wodim"
@@ -700,7 +700,7 @@ SOFTWARE_PACKAGES="$AMAVISD $APACHE $APACHE_MODULES $APPARMOR $BIND $CHRONY \
   $CLAMAV $CLUSTER_SUITE $CUPS $DOVECOT $FAI $FOREMAN $FREERADIUS \
   $FUSIONDIRECTORY $JDK $KERBEROS $LTSP $MARIADB $MUNIN $NAGIOS $NFS \
   $OPENXCHANGE $OPENLDAP $OPENSSH $OPENSSL $OPENVPN $PHP $POSTFIX $POSTGRESQL \
-  $PROFTPD $PROXY $SASL $SHOREWALL $SNORT $SOURCE_CODE_DEPENDS $SPAMASSASSIN \
+  $PROFTPD $PROXY $SASL $SHOREWALL $SNORT $SOURCE_CODE_DEPENDS $SPAM_PREVENTION \
   $SQUIDCLAMAV_DEPENDS $SYSTEM_DEPENDS $WEBMIN"
 
 # Software package verification.
@@ -1836,6 +1836,17 @@ sa-compile
 EOF.sa-update
 echo "@daily root /usr/local/bin/sa-update.sh" > /etc/cron.d/sa-update
 chmod 700 /usr/local/bin/sa-update.sh
+
+# Configure Razor and Pyzor.
+su - amavis -s /bin/bash
+razor-admin -create
+razor-admin -register
+razor-admin -discover
+mkdir -p /etc//spamassassin/.pyzor
+chown -R spamd:spamd /etc//spamassassin/.pyzor
+sudo -u spamd pyzor --homedir /etc/spamassassin/.pyzor discover
+grep -q "pyzor_options" /etc/spamassassin/local.cf || \ 
+echo 'pyzor_options --homedir /etc/spamassassin/.pyzor' | sudo tee -a /etc/spamassassin/local.cf
 
 # Reload configuration.
 systemctl restart clamav-daemon
@@ -4050,7 +4061,7 @@ service submission-login {
 }
 
 service lmtp {
-  unix_listener lmtp {
+  unix_listener /var/spool/postfix/private/dovecot-lmtp {
     mode = 0600
     user = postfix
     group = postfix
@@ -4107,6 +4118,15 @@ sed -i "/ssl = yes/ s|#||
   /ssl_key =/ c\ssl_key = </etc/ssl/private/tls-key.pem
   /ssl_ca =/ c\ssl_ca = </etc/ssl/certs/ca-bundle.pem
   /ssl_require_crl =/ c\ssl_require_crl = yes" /etc/dovecot/conf.d/10-ssl.conf
+
+# Configure 20-lmtp.conf.
+if [ ! -f /etc/dovecot/conf.d/20-lmtp.conf.orig ]; then
+  cp /etc/dovecot/conf.d/20-lmtp.conf.conf /etc/dovecot/conf.d/20-lmtp.conf.orig
+fi
+grep -q "postmaster_address" /etc/dovecot/conf.d/20-lmtp.conf || \
+sed -i "/#mail_plugins = $mail_plugins/ c\  mail_plugins = \$mail_plugins quota
+  /#mail_plugins/ a\postmaster_address = postmaster@$WAN_DOMAIN" \
+  /etc/dovecot/conf.d/20-lmtp.conf
 
 # Configure 20-imap.conf.
 if [ ! -f /etc/dovecot/conf.d/20-imap.conf.orig ]; then 
@@ -4213,7 +4233,7 @@ mynetworks = 127.0.0.0/8 $LAN_NETWORK_ADDRESS/$CIDR
 mydestination = \$myhostname, $FQDN, localhost, localhost.$LAN_DOMAIN,\
  www.\$mydomain, ftp.\$mydomain
 
-virtual_transport = dovecot
+virtual_transport = lmtp:unix:private/dovecot-lmtp
 virtual_gid_maps = static:vmail
 virtual_uid_maps = static:vmail
 virtual_mailbox_base = /home/vmail
@@ -4255,6 +4275,7 @@ smtpd_recipient_restrictions =
   reject_unauth_pipelining,
   reject_unauth_destination,
   reject_non_fqdn_recipient,
+  reject_unverified_recipient,
   reject_unknown_sender_domain,
   reject_unknown_recipient_domain,
   check_client_access hash:/etc/postfix/access,
