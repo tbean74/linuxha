@@ -3969,7 +3969,7 @@ if [ ! -f /etc/proftpd/ldap.conf.orig ]; then
 fi
 sed -i "/mod_ldap.c/ s|^#||" /etc/proftpd/modules.conf
 sed -i "/LDAPServer/ c\LDAPServer ldapi:///
-  /LDAPBindDN/ c\LDAPBindDN "uid=admin,ou=people,$LDAP_BASE_DN" "$ADMIN_PASSWORD"
+  /LDAPBindDN/ c\LDAPBindDN \"\" \"\"
   /LDAPUseTLS/ c\LDAPUseTLS on" /etc/proftpd/ldap.conf
 
 # Reload configuration.
