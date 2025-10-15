@@ -1790,7 +1790,7 @@ echo "Installing malware and spam scanners."
 echo ""
 
 # Install malware and spam scanners.
-apt_function install $AMAVISD $SPAMASSASSIN $CLAMAV
+apt_function install $AMAVISD $SPAM_PREVENTION $CLAMAV
 
 # Configure clamd.conf.
 if [ ! -f /etc/clamav/clamd.conf.orig ]; then 
