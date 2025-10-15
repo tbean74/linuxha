@@ -1837,15 +1837,18 @@ EOF.sa-update
 echo "@daily root /usr/local/bin/sa-update.sh" > /etc/cron.d/sa-update
 chmod 700 /usr/local/bin/sa-update.sh
 
-# Configure Razor and Pyzor.
+# Configure Razor.
 mkdir -p /etc/spamassassin/.razor
 razor-admin -home=/etc/spamassassin/.razor -register
 razor-admin -home=/etc/spamassassin/.razor -create
 razor-admin -home=/etc/spamassassin/.razor -discover
-grep -q "razor_config /etc/spamassassin/.razor/razor-agent.conf" \
-  /etc/spamassassin/local.cf || \
+grep -q "razor_config" /etc/spamassassin/local.cf || \
+echo "razor_config /etc/spamassassin/.razor/razor-agent.conf" >> \
+  /etc/spamassassin/local.cf
+
+# Configure Pyzor.
+grep -q "pyzor_options" /etc/spamassassin/local.cf || \
 cat >> /etc/spamassassin/local.cf << EOF.local.cf
-razor_config /etc/spamassassin/.razor/razor-agent.conf
 pyzor_options --homedir /etc/spamassassin/.pyzor
 pyzor_timeout 20
 EOF.local.cf
