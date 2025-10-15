@@ -691,7 +691,7 @@ SASL="cyrus-sasl2-doc libsasl2-2 libsasl2-modules libsasl2-modules-gssapi-mit \
 SHOREWALL="shorewall shorewall-doc shorewall-init"
 SNORT="oinkmaster snort snort-doc"
 SOURCE_CODE_DEPENDS="gcc git make subversion"
-SPAM_PREVENTION="razor pyzor spamassassin"
+SPAM_PREVENTION="pyzor spamassassin"
 SQUIDCLAMAV_DEPENDS="libicapapi-dev libssl-dev libtimedate-perl"
 SYSTEM_DEPENDS="apt-utils dkms vim-scripts"
 WEBMIN="at cups mdadm quota quotatool sarg stunnel4 usermin webalizer webmin wodim"
@@ -1837,16 +1837,10 @@ EOF.sa-update
 echo "@daily root /usr/local/bin/sa-update.sh" > /etc/cron.d/sa-update
 chmod 700 /usr/local/bin/sa-update.sh
 
-# Configure Razor and Pyzor.
-su - amavis -s /bin/bash
+# Configure Razor.
 razor-admin -create
 razor-admin -register
 razor-admin -discover
-mkdir -p /etc//spamassassin/.pyzor
-chown -R spamd:spamd /etc//spamassassin/.pyzor
-sudo -u spamd pyzor --homedir /etc/spamassassin/.pyzor discover
-grep -q "pyzor_options" /etc/spamassassin/local.cf || \ 
-echo 'pyzor_options --homedir /etc/spamassassin/.pyzor' | sudo tee -a /etc/spamassassin/local.cf
 
 # Reload configuration.
 systemctl restart clamav-daemon
