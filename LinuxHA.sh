@@ -691,7 +691,7 @@ SASL="cyrus-sasl2-doc libsasl2-2 libsasl2-modules libsasl2-modules-gssapi-mit \
 SHOREWALL="shorewall shorewall-doc shorewall-init"
 SNORT="oinkmaster snort snort-doc"
 SOURCE_CODE_DEPENDS="gcc git make subversion"
-SPAM_PREVENTION="pyzor spamassassin"
+SPAM_PREVENTION="pyzor razor spamassassin"
 SQUIDCLAMAV_DEPENDS="libicapapi-dev libssl-dev libtimedate-perl"
 SYSTEM_DEPENDS="apt-utils dkms vim-scripts"
 WEBMIN="at cups mdadm quota quotatool sarg stunnel4 usermin webalizer webmin wodim"
@@ -1837,10 +1837,20 @@ EOF.sa-update
 echo "@daily root /usr/local/bin/sa-update.sh" > /etc/cron.d/sa-update
 chmod 700 /usr/local/bin/sa-update.sh
 
-# Configure Razor.
-razor-admin -create
-razor-admin -register
-razor-admin -discover
+# Configure Razor and Pyzor.
+mkdir -p /etc/spamassassin/.razor
+razor-admin -home=/etc/spamassassin/.razor -register
+razor-admin -home=/etc/spamassassin/.razor -create
+razor-admin -home=/etc/spamassassin/.razor -discover
+grep -q "razor_config /etc/spamassassin/.razor/razor-agent.conf" \
+  /etc/spamassassin/local.cf || \
+cat >> /etc/spamassassin/local.cf << EOF.local.cf
+razor_config /etc/spamassassin/.razor/razor-agent.conf
+pyzor_options --homedir /etc/spamassassin/.pyzor
+pyzor_timeout 20
+EOF.local.cf
+mkdir -p /etc/spamassassin/.pyzor
+chown debian-spamd:debian-spamd /etc/spamassassin/.pyzor
 
 # Reload configuration.
 systemctl restart clamav-daemon
@@ -3959,7 +3969,7 @@ if [ ! -f /etc/proftpd/ldap.conf.orig ]; then
 fi
 sed -i "/mod_ldap.c/ s|^#||" /etc/proftpd/modules.conf
 sed -i "/LDAPServer/ c\LDAPServer ldapi:///
-  /LDAPBindDN/ c\LDAPBindDN \"\" \"\"
+  /LDAPBindDN/ c\LDAPBindDN "uid=admin,ou=people,$LDAP_BASE_DN" "$ADMIN_PASSWORD"
   /LDAPUseTLS/ c\LDAPUseTLS on" /etc/proftpd/ldap.conf
 
 # Reload configuration.
@@ -4119,7 +4129,7 @@ if [ ! -f /etc/dovecot/conf.d/20-lmtp.conf.orig ]; then
 fi
 grep -q "postmaster_address" /etc/dovecot/conf.d/20-lmtp.conf || \
 sed -i "/#mail_plugins = $mail_plugins/ c\  mail_plugins = \$mail_plugins quota
-  /#mail_plugins/ a\postmaster_address = postmaster@$WAN_DOMAIN" \
+  /mail_plugins = \$mail_plugins quota/ a\  postmaster_address = postmaster@$WAN_DOMAIN" \
   /etc/dovecot/conf.d/20-lmtp.conf
 
 # Configure 20-imap.conf.
