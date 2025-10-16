@@ -3299,11 +3299,11 @@ if [ ! -f /etc/bind/named.conf.local.orig ]; then
 fi
 if [ "$SERVER" = "pdc" ]; then
   DNS_TYPE="master"
-  DNS_TRANSFER="grant "DNS/$FQDN@$KERBEROS_REALM" zonesub any"
+  DNS_TRANSFER="grant \"DNS/$FQDN@$KERBEROS_REALM\" zonesub any"
   DNS_NOTIFY="$BDC_LAN_IP_ADDRESS"
 else
   DNS_TYPE="slave"
-  DNS_TRANSFER="grant "DNS/$FQDN@$KERBEROS_REALM" zonesub any"
+  DNS_TRANSFER="grant \"DNS/$FQDN@$KERBEROS_REALM\" zonesub any"
   DNS_NOTIFY="$PDC_LAN_IP_ADDRESS"  
 fi
 cat > /etc/bind/named.conf.local << EOF.named.conf.local
