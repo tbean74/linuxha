@@ -4171,7 +4171,7 @@ PERCENT=\$1
 USER=\$2
 cat << EOF | /usr/lib/dovecot/dovecot-lda -d \$USER \
 -o \"plugin/quota=maildir:User quota:noenforcing\"
-From: postmaster@localhost
+From: postmaster
 Subject: Quota Warning
 
 Your mailbox is now \$PERCENT% full.
