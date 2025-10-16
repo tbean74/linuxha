@@ -4132,7 +4132,7 @@ if [ ! -f /etc/dovecot/conf.d/20-lmtp.conf.orig ]; then
 fi
 grep -q "postmaster_address" /etc/dovecot/conf.d/20-lmtp.conf || \
 sed -i "/#mail_plugins = .*/ c\  mail_plugins = \$mail_plugins quota
-  /mail_plugins/ a\  postmaster_address = postmaster@$WAN_DOMAIN" \
+  /mail_plugins/ a\  postmaster_address = postmaster@localhost" \
   /etc/dovecot/conf.d/20-lmtp.conf
 
 # Configure 20-imap.conf.
@@ -4170,7 +4170,7 @@ PERCENT=\$1
 USER=\$2
 cat << EOF | /usr/lib/dovecot/dovecot-lda -d \$USER \
 -o \"plugin/quota=maildir:User quota:noenforcing\"
-From: postmaster@$WAN_DOMAIN
+From: postmaster@localhost
 Subject: Quota Warning
 
 Your mailbox is now \$PERCENT% full.
