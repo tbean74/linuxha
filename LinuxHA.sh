@@ -4001,7 +4001,6 @@ echo ""
 apt_function install $DOVECOT
 
 # Configure Vmail.
-groupadd vmail
 useradd -m -k "" -s /bin/false vmail
 chmod 2770 /home/vmail
 
