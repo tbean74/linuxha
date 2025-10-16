@@ -4133,7 +4133,7 @@ if [ ! -f /etc/dovecot/conf.d/20-lmtp.conf.orig ]; then
   cp /etc/dovecot/conf.d/20-lmtp.conf.conf /etc/dovecot/conf.d/20-lmtp.conf.orig
 fi
 grep -q "postmaster_address" /etc/dovecot/conf.d/20-lmtp.conf || \
-sed -i "/#mail_plugins = .*/ c\  mail_plugins = \$mail_plugins quota
+sed -i "/#mail_plugins = .*/ c\  mail_plugins = \$mail_plugins
   /mail_plugins/ a\  postmaster_address = postmaster@localhost" \
   /etc/dovecot/conf.d/20-lmtp.conf
 
