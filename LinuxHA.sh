@@ -4098,7 +4098,6 @@ service auth {
     group = vmail
   }
 
-  # Postfix smtp-auth
   unix_listener /var/spool/postfix/private/auth {
     mode = 0660
     user = postfix
@@ -4115,7 +4114,6 @@ service dict {
     mode = 0660
     user = vmail
     group = vmail
-
   }
 }
 EOF.10-master.conf
