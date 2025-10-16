@@ -3307,7 +3307,6 @@ else
   DNS_NOTIFY="$PDC_LAN_IP_ADDRESS"  
 fi
 cat > /etc/bind/named.conf.local << EOF.named.conf.local
-
 zone "$LAN_DOMAIN" {
   type $DNS_TYPE;
   also-notify { $DNS_NOTIFY; };
