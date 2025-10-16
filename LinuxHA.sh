@@ -4035,7 +4035,7 @@ fi
 sed -i "s|mail_location = mbox:~.*$|mail_location = maildir:/home/vmail/%h|
   /mail_uid =/ c\mail_uid = vmail
   /mail_gid =/ c\mail_gid = vmail
-  /mail_plugins =/ c\mail_plugins = fts quota
+  /mail_plugins =/ c\mail_plugins = antispam fts quota
   /mailbox_list_index/ s|^#||
   /mailbox_idle_check_interval/ s|^#||
   /maildir_copy_with_hardlinks/ s|^#||" /etc/dovecot/conf.d/10-mail.conf
