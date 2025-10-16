@@ -1843,17 +1843,22 @@ razor-admin -home=/etc/spamassassin/.razor -register
 razor-admin -home=/etc/spamassassin/.razor -create
 razor-admin -home=/etc/spamassassin/.razor -discover
 grep -q "razor_config" /etc/spamassassin/local.cf || \
-echo "razor_config /etc/spamassassin/.razor/razor-agent.conf" >> \
-  /etc/spamassassin/local.cf
+cat >> /etc/spamassassin/local.cf << EOF.local.cf
+
+# Razor configuration.
+razor_config /etc/spamassassin/.razor/razor-agent.conf
+EOF.local.cf
 
 # Configure Pyzor.
+mkdir -p /etc/spamassassin/.pyzor
+chown debian-spamd:debian-spamd /etc/spamassassin/.pyzor
 grep -q "pyzor_options" /etc/spamassassin/local.cf || \
 cat >> /etc/spamassassin/local.cf << EOF.local.cf
+
+# Pyzor configuration.
 pyzor_options --homedir /etc/spamassassin/.pyzor
 pyzor_timeout 20
 EOF.local.cf
-mkdir -p /etc/spamassassin/.pyzor
-chown debian-spamd:debian-spamd /etc/spamassassin/.pyzor
 
 # Reload configuration.
 systemctl restart clamav-daemon
