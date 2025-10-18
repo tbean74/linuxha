@@ -653,12 +653,10 @@ FAI="debmirror fai-doc fai-server"
 FREERADIUS="freeradius freeradius-krb5 freeradius-ldap libpam-radius-auth"
 FUSIONDIRECTORY="fusiondirectory fusiondirectory-tools \
   fusiondirectory-plugin-autofs5 fusiondirectory-plugin-autofs5-schema \
-  fusiondirectory-plugin-certificates fusiondirectory-plugin-dovecot \
-  fusiondirectory-plugin-dovecot-schema fusiondirectory-plugin-fai \
+  fusiondirectory-plugin-certificates fusiondirectory-plugin-fai \
   fusiondirectory-plugin-fai-schema fusiondirectory-plugin-freeradius \
   fusiondirectory-plugin-gpg fusiondirectory-plugin-gpg-schema \
   fusiondirectory-plugin-kerberos fusiondirectory-plugin-ldapmanager \
-  fusiondirectory-plugin-postfix fusiondirectory-plugin-postfix-schema \
   fusiondirectory-plugin-quota fusiondirectory-plugin-quota-schema \
   fusiondirectory-plugin-spamassassin fusiondirectory-plugin-spamassassin-schema \
   fusiondirectory-plugin-ssh fusiondirectory-plugin-ssh-schema \
@@ -2493,7 +2491,6 @@ include: file:///etc/ldap/schema/autofs.ldif
 include: file:///etc/ldap/schema/autofs5-fd-conf.ldif
 include: file:///etc/ldap/schema/core-fd-conf.ldif
 include: file:///etc/ldap/schema/core-fd.ldif
-include: file:///etc/ldap/schema/dovecot-fd.ldif
 include: file:///etc/ldap/schema/fai-fd-conf.ldif
 include: file:///etc/ldap/schema/fai.ldif
 include: file:///etc/ldap/schema/gpg-fd.ldif
@@ -2503,7 +2500,6 @@ include: file:///etc/ldap/schema/openssh-lpk.ldif
 include: file:///etc/ldap/schema/pgp-keyserver.ldif
 include: file:///etc/ldap/schema/pgp-recon.ldif
 include: file:///etc/ldap/schema/pgp-remte-prefs.ldif
-include: file:///etc/ldap/schema/postfix-fd.ldif
 include: file:///etc/ldap/schema/quota-fd.ldif
 include: file:///etc/ldap/schema/quota.ldif
 include: file:///etc/ldap/schema/service-fd.ldif
