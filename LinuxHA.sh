@@ -655,10 +655,8 @@ FUSIONDIRECTORY="fusiondirectory fusiondirectory-tools \
   fusiondirectory-plugin-autofs5 fusiondirectory-plugin-autofs5-schema \
   fusiondirectory-plugin-certificates fusiondirectory-plugin-fai \
   fusiondirectory-plugin-fai-schema fusiondirectory-plugin-freeradius \
-  fusiondirectory-plugin-gpg fusiondirectory-plugin-gpg-schema \
   fusiondirectory-plugin-kerberos fusiondirectory-plugin-ldapmanager \
   fusiondirectory-plugin-quota fusiondirectory-plugin-quota-schema \
-  fusiondirectory-plugin-spamassassin fusiondirectory-plugin-spamassassin-schema \
   fusiondirectory-plugin-ssh fusiondirectory-plugin-ssh-schema \
   fusiondirectory-plugin-sudo fusiondirectory-plugin-sudo-schema"
 JDK="default-jdk"
@@ -2493,17 +2491,12 @@ include: file:///etc/ldap/schema/core-fd-conf.ldif
 include: file:///etc/ldap/schema/core-fd.ldif
 include: file:///etc/ldap/schema/fai-fd-conf.ldif
 include: file:///etc/ldap/schema/fai.ldif
-include: file:///etc/ldap/schema/gpg-fd.ldif
 include: file:///etc/ldap/schema/kerberos.ldif
 include: file:///etc/ldap/schema/ldapns.ldif
 include: file:///etc/ldap/schema/openssh-lpk.ldif
-include: file:///etc/ldap/schema/pgp-keyserver.ldif
-include: file:///etc/ldap/schema/pgp-recon.ldif
-include: file:///etc/ldap/schema/pgp-remte-prefs.ldif
 include: file:///etc/ldap/schema/quota-fd.ldif
 include: file:///etc/ldap/schema/quota.ldif
 include: file:///etc/ldap/schema/service-fd.ldif
-include: file:///etc/ldap/schema/spamassassin-fd.ldif
 include: file:///etc/ldap/schema/sudo-fd-conf.ldif
 include: file:///etc/ldap/schema/sudo.ldif
 include: file:///etc/ldap/schema/systems-fd-conf.ldif
