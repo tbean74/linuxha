@@ -796,7 +796,7 @@ echo ""
 # Install OpenSSH.
 apt_function install $OPENSSH
 
-# Allow root login.
+# Allow SSH root login using passwords.
 sed -i "s|#PermitRootLogin prohibit-password|PermitRootLogin yes|" \
   /etc/ssh/sshd_config
 systemctl restart ssh
@@ -891,6 +891,11 @@ else
   done
 fi
 rm -f /tmp/cat_helper.sh
+
+# Prohibit SSH root login using passwords.
+sed -i "s|PermitRootLogin yes|PermitRootLogin prohibit-password|" \
+  /etc/ssh/sshd_config
+systemctl restart ssh
 
 ################################################################################
 #                                                                              #
