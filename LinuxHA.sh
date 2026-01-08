@@ -574,7 +574,11 @@ net.ipv4.ip_forward = 1
 # Do not accept ICMP redirects (prevent MITM attacks).
 net.ipv4.conf.all.accept_redirects = 0
 EOF.sysctl.conf
-sysctl -p /etc/sysctl.conf
+syisctl -p /etc/sysctl.conf
+
+# Configure Logwatch.
+mkdir -p /var/cache/logwatch
+cp /usr/share/logwatch/default.conf/logwatch.conf /etc/logwatch/conf
 
 clear
 echo ""
@@ -689,7 +693,7 @@ SNORT="oinkmaster snort snort-doc"
 SOURCE_CODE_DEPENDS="gcc git make subversion"
 SPAM_PREVENTION="pyzor razor spamassassin"
 SQUIDCLAMAV_DEPENDS="libicapapi-dev libssl-dev libtimedate-perl"
-SYSTEM_DEPENDS="apt-utils dkms vim-scripts"
+SYSTEM_DEPENDS="apt-utils dkms logwatch vim-scripts"
 WEBMIN="at cups mdadm quota quotatool sarg stunnel4 usermin webalizer webmin wodim"
 
 SOFTWARE_PACKAGES="$AMAVISD $APACHE $APACHE_MODULES $APPARMOR $BIND $CHRONY \
