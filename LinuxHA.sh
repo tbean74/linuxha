@@ -645,6 +645,7 @@ APACHE_MODULES="libapache2-mod-auth-gssapi libapache2-mod-fcgid \
 APPARMOR="apparmor apparmor-notify apparmor-profiles apparmor-utils \
   dh-apparmor"
 BIND="bind9 bind9-doc bind9utils libnet-dns-sec-perl"
+CERTIFICATE_AUTHORITY="openssl certbot python3-certbot-apache"
 CHRONY="chrony"
 CLAMAV="clamav clamav-daemon clamav-docs clamav-freshclam"
 CLUSTER_SUITE="cluster-glue crmsh dlm-controld drbd-utils fence-agents \
@@ -677,7 +678,6 @@ OPENXCHANGE="open-xchange*"
 OPENLDAP="authselect autofs-ldap krb5-kdc-ldap ldap-utils phpldapadmin \
   schema2ldif slapd sssd-krb5 sssd-ldap"
 OPENSSH="openssh-server sshpass"
-OPENSSL="openssl"
 OPENVPN="openvpn"
 PHP="php8.3 php8.3-dev"
 POSTFIX="postfix postfix-doc postfix-ldap postfix-policyd-spf-python postgrey \
@@ -697,9 +697,9 @@ SYSTEM_DEPENDS="apt-utils dkms logwatch vim-scripts"
 WEBMIN="at cups mdadm quota quotatool sarg stunnel4 usermin webalizer webmin wodim"
 
 SOFTWARE_PACKAGES="$AMAVISD $APACHE $APACHE_MODULES $APPARMOR $BIND $CHRONY \
-  $CLAMAV $CLUSTER_SUITE $CUPS $DOVECOT $FAI $FOREMAN $FREERADIUS \
+  $CERTIFICATE_AUTHORITY $CLAMAV $CLUSTER_SUITE $CUPS $DOVECOT $FAI $FREERADIUS \
   $FUSIONDIRECTORY $JDK $KERBEROS $LTSP $MARIADB $MUNIN $NAGIOS $NFS \
-  $OPENXCHANGE $OPENLDAP $OPENSSH $OPENSSL $OPENVPN $PHP $POSTFIX $POSTGRESQL \
+  $OPENXCHANGE $OPENLDAP $OPENSSH $OPENVPN $PHP $POSTFIX $POSTGRESQL \
   $PROFTPD $PROXY $SASL $SHOREWALL $SNORT $SOURCE_CODE_DEPENDS $SPAM_PREVENTION \
   $SQUIDCLAMAV_DEPENDS $SYSTEM_DEPENDS $WEBMIN"
 
@@ -1873,9 +1873,12 @@ systemctl restart amavis
 ################################################################################
 #                                                                              #
 # The following routine installs and configures OpenSSL, which implements      #
-# cryptographic functions and provides a Certificate Authority.                #
+# cryptographic functions and provides a Certificate Authority, and Certbot,   #
+# which provides free TLS certificates, making it easy for websites to enable  #
+# HTTPS encryption.                                                            #
 #                                                                              #
 # openssl.org                                                                  #
+# certbot.eff.org/instructions                                                 #
 #                                                                              #
 ################################################################################
 
