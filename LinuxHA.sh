@@ -1873,9 +1873,10 @@ systemctl restart amavis
 ################################################################################
 #                                                                              #
 # The following routine installs and configures OpenSSL, which implements      #
-# cryptographic functions and provides a Certificate Authority, and Certbot,   #
-# which provides free TLS certificates, making it easy for websites to enable  #
-# HTTPS encryption.                                                            #
+# cryptographic functions and provides a Certificate Authority.                #
+#                                                                              #
+# Certbot provides free TLS certificates, making it easy for websites to       #
+# enable HTTPS encryption.                                                     #
 #                                                                              #
 # openssl.org                                                                  #
 # certbot.eff.org/instructions                                                 #
@@ -1888,7 +1889,7 @@ echo "Installing OpenSSL."
 echo ""
 
 # Install OpenSSL.
-apt_function install $OPENSSL
+apt_function install $CERTIFICATE_AUTHORITY
 
 # Create CA directory structure.
 mkdir -p /etc/ssl/crl
