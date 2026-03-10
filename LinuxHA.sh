@@ -641,7 +641,7 @@ apt_function update
 AMAVISD="amavisd-new-postfix unrar-free"
 APACHE="apache2 apache2-doc apache2-utils"
 APACHE_MODULES="libapache2-mod-auth-gssapi libapache2-mod-fcgid \
-  libapache2-mod-passenger libapache2-mod-php8.3"
+  libapache2-mod-php8.3"
 APPARMOR="apparmor apparmor-notify apparmor-profiles apparmor-utils \
   dh-apparmor"
 BIND="bind9 bind9-doc bind9utils libnet-dns-sec-perl"
@@ -2048,8 +2048,6 @@ a2enmod ssl
 a2enmod auth_gssapi
 # WebDav modules.
 a2enmod dav dav_fs
-# Passenger module for Foreman.
-a2enmod passenger
 # FastCGI Munin module.
 a2enmod fcgid
 # Open-Xchange modules.
